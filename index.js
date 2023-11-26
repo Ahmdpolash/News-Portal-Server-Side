@@ -1,5 +1,5 @@
 const express = require("express");
-const { MongoClient, ServerApiVersion } = require("mongodb");
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const app = express();
 require("dotenv").config();
 const port = process.env.PORT || 5000;
@@ -54,14 +54,18 @@ const client = new MongoClient(uri, {
 async function run() {
   try {
     const usersCollection = client.db("Newsportal").collection("users");
+    const articleCollection = client.db("Newsportal").collection("articles");
+    const publisherCollection = client.db("Newsportal").collection("publishers");
+
+    //====================!users api========================
 
     //!sent user info in db when login
     app.post("/users", async (req, res) => {
       const users = req.body;
       const email = { email: users.email };
-      
+
       const existingEmail = await usersCollection.findOne(email);
-      
+
       if (existingEmail) {
         return res.send({ message: "user already exist", insertedId: null });
       }
@@ -72,6 +76,108 @@ async function run() {
     //!get users info
     app.get("/users", async (req, res) => {
       const result = await usersCollection.find().toArray();
+      res.send(result);
+    });
+
+    //!make Admin users
+    app.patch("/users/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const updateDoc = {
+        $set: {
+          role: "admin",
+        },
+      };
+      const result = await usersCollection.updateOne(filter, updateDoc);
+      res.send(result);
+    });
+
+    //!get single user by email
+    app.get("/users/:email", async (req, res) => {
+      const email = req.params.email;
+      const query = { email: email };
+      const result = await usersCollection.findOne(query);
+      res.send(result);
+    });
+
+    //====================!articles api========================
+
+    //!articles post
+    app.post("/articles", async (req, res) => {
+      const article = req.body;
+      const result = await articleCollection.insertOne(article);
+      res.send(result);
+    });
+
+    //!get article
+    app.get("/articles", async (req, res) => {
+      const result = await articleCollection.find().toArray();
+      res.send(result);
+    });
+
+    app.patch("/articles/:id", async (req, res) => {
+      const id = req.params.id;
+      const data = req.body;
+      const query = { _id: new ObjectId(id) };
+      const updateDoc = {
+        $set: {
+          status: data.status && "pending",
+        },
+      };
+    });
+
+    //====================!Admin routes========================
+
+    //====================!publisher api========================
+
+    //!post publisher info
+    app.post("/publishers", async (req, res) => {
+      const publisher = req.body;
+      const result = await publisherCollection.insertOne(publisher);
+      res.send(result);
+    });
+    
+    //!get publisher
+    app.get("/publishers", async (req, res) => {
+      const result = await publisherCollection.find().toArray();
+      res.send(result);
+    });
+
+    //====================!admin article api========================
+
+    //!delete articles
+    app.delete("/articles/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await articleCollection.deleteOne(query);
+      res.send(result);
+    });
+
+    // //!approved articles
+    // app.patch("/articles/:id", async (req, res) => {
+    //   const id = req.params.id;
+    //   const articles = req.body;
+    //   const query = { _id: new ObjectId(id) };
+    //   const updateDoc = {
+    //     $set: {
+    //       status: "approved",
+    //     },
+    //   };
+    //   const result = await articleCollection.updateOne(query, updateDoc);
+    //   res.send(result);
+    // });
+
+    //!make premium articles
+    app.patch("/articles/premium/:id", async (req, res) => {
+      const id = req.params.id;
+      const articles = req.body;
+      const query = { _id: new ObjectId(id) };
+      const updateDoc = {
+        $set: {
+          price: "premium",
+        },
+      };
+      const result = await articleCollection.updateOne(query, updateDoc);
       res.send(result);
     });
 
