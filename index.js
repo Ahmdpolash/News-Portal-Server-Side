@@ -121,9 +121,11 @@ async function run() {
       const query = { _id: new ObjectId(id) };
       const updateDoc = {
         $set: {
-          status: data.status && "pending",
+          status: data.status,
         },
       };
+      const result = await articleCollection.updateOne(query,updateDoc)
+      res.send(result)
     });
 
     //====================!Admin routes========================
