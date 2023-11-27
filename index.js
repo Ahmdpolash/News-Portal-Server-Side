@@ -55,7 +55,9 @@ async function run() {
   try {
     const usersCollection = client.db("Newsportal").collection("users");
     const articleCollection = client.db("Newsportal").collection("articles");
-    const publisherCollection = client.db("Newsportal").collection("publishers");
+    const publisherCollection = client
+      .db("Newsportal")
+      .collection("publishers");
 
     //====================!users api========================
 
@@ -80,7 +82,7 @@ async function run() {
     });
 
     //!make Admin users
-    app.patch("/users/:id", async (req, res) => {
+    app.patch("/users/admin/:id", async (req, res) => {
       const id = req.params.id;
       const filter = { _id: new ObjectId(id) };
       const updateDoc = {
@@ -93,11 +95,17 @@ async function run() {
     });
 
     //!get single user by email
-    app.get("/users/:email", async (req, res) => {
+    app.get("/users/admin/:email", async (req, res) => {
       const email = req.params.email;
+
       const query = { email: email };
-      const result = await usersCollection.findOne(query);
-      res.send(result);
+      const user = await usersCollection.findOne(query);
+      let admin = false;
+
+      if (user) {
+        admin = user.role == "admin";
+      }
+      res.send({ admin });
     });
 
     //====================!articles api========================
@@ -124,8 +132,8 @@ async function run() {
           status: data.status,
         },
       };
-      const result = await articleCollection.updateOne(query,updateDoc)
-      res.send(result)
+      const result = await articleCollection.updateOne(query, updateDoc);
+      res.send(result);
     });
 
     //====================!Admin routes========================
@@ -138,7 +146,7 @@ async function run() {
       const result = await publisherCollection.insertOne(publisher);
       res.send(result);
     });
-    
+
     //!get publisher
     app.get("/publishers", async (req, res) => {
       const result = await publisherCollection.find().toArray();
