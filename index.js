@@ -55,6 +55,7 @@ async function run() {
   try {
     const usersCollection = client.db("Newsportal").collection("users");
     const articleCollection = client.db("Newsportal").collection("articles");
+    const declineCollection = client.db("Newsportal").collection("declines");
     const publisherCollection = client
       .db("Newsportal")
       .collection("publishers");
@@ -117,6 +118,18 @@ async function run() {
       res.send(result);
     });
 
+    //decline get and post
+    app.post("/declines", async (req, res) => {
+      const article = req.body;
+      const result = await declineCollection.insertOne(article);
+      res.send(result);
+    });
+
+    app.get("/declines", async (req, res) => {
+      const result = await declineCollection.find().toArray();
+      res.send(result);
+    });
+
     //!get article
     app.get("/articles", async (req, res) => {
       const result = await articleCollection.find().toArray();
@@ -164,18 +177,27 @@ async function run() {
     });
 
     // //!approved articles
-    // app.patch("/articles/:id", async (req, res) => {
-    //   const id = req.params.id;
-    //   const articles = req.body;
-    //   const query = { _id: new ObjectId(id) };
-    //   const updateDoc = {
-    //     $set: {
-    //       status: "approved",
-    //     },
-    //   };
-    //   const result = await articleCollection.updateOne(query, updateDoc);
-    //   res.send(result);
-    // });
+    app.patch("/articles/:id", async (req, res) => {
+      const id = req.params.id;
+      const data = req.body;
+     
+      const query = { _id: new ObjectId(id) };
+     
+      const updateDoc = {
+        $set: {
+          status: data.status,
+        },
+      };
+      const result = await articleCollection.updateOne(query, updateDoc);
+      res.send(result);
+    });
+
+    app.get("/article/approve", async (req, res) => {
+      const query = { status: "approve" };
+      const result = await articleCollection.find(query).toArray();
+      res.send(result);
+    });
+    
 
     //!make premium articles
     app.patch("/articles/premium/:id", async (req, res) => {
@@ -184,7 +206,7 @@ async function run() {
       const query = { _id: new ObjectId(id) };
       const updateDoc = {
         $set: {
-          price: "premium",
+          Quality: "premium",
         },
       };
       const result = await articleCollection.updateOne(query, updateDoc);
