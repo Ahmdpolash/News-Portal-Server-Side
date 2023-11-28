@@ -118,13 +118,13 @@ async function run() {
       res.send(result);
     });
 
-    //decline get and post
+    //!decline post
     app.post("/declines", async (req, res) => {
       const article = req.body;
       const result = await declineCollection.insertOne(article);
       res.send(result);
     });
-
+    //!decline get
     app.get("/declines", async (req, res) => {
       const result = await declineCollection.find().toArray();
       res.send(result);
@@ -136,6 +136,7 @@ async function run() {
       res.send(result);
     });
 
+    //!status update
     app.patch("/articles/:id", async (req, res) => {
       const id = req.params.id;
       const data = req.body;
@@ -146,6 +147,15 @@ async function run() {
         },
       };
       const result = await articleCollection.updateOne(query, updateDoc);
+      res.send(result);
+    });
+
+    //====================!my article api======================
+    app.get("/articles/myarticle", async (req, res) => {
+      const email = req.query.email;
+      const query = { email: email };
+
+      const result = await articleCollection.find(query).toArray();
       res.send(result);
     });
 
@@ -180,9 +190,9 @@ async function run() {
     app.patch("/articles/:id", async (req, res) => {
       const id = req.params.id;
       const data = req.body;
-     
+
       const query = { _id: new ObjectId(id) };
-     
+
       const updateDoc = {
         $set: {
           status: data.status,
@@ -192,12 +202,12 @@ async function run() {
       res.send(result);
     });
 
+    //!get approved articles
     app.get("/article/approve", async (req, res) => {
       const query = { status: "approve" };
       const result = await articleCollection.find(query).toArray();
       res.send(result);
     });
-    
 
     //!make premium articles
     app.patch("/articles/premium/:id", async (req, res) => {
