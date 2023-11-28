@@ -118,6 +118,13 @@ async function run() {
       res.send(result);
     });
 
+    app.get('/details/:id', async(req, res) => {
+      const id = req.params.id ;
+      const query = {_id :new ObjectId(id)}
+      const result = await articleCollection.findOne(query);
+      res.send(result)
+    })
+
     //!decline post
     app.post("/declines", async (req, res) => {
       const article = req.body;
@@ -154,11 +161,43 @@ async function run() {
     app.get("/articles/myarticle", async (req, res) => {
       const email = req.query.email;
       const query = { email: email };
-
       const result = await articleCollection.find(query).toArray();
       res.send(result);
     });
+  
+    app.get('/articles/update/:id',async(req,res) =>{
+      const id = req.params.id 
+      const query = {_id :new ObjectId(id)}
+      const result = await articleCollection.findOne(query)
+      res.send(result)
+    })
 
+    //!delete api myarticle
+    app.delete("/articles/myarticle/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await articleCollection.deleteOne(query);
+      res.send(result);
+    });
+
+    //!update my article
+
+    app.patch("/articles/update/:id", async (req, res) => {
+      const id = req.params.id;
+      const data = req.body;
+      const query = { _id: new ObjectId(id) };
+      const updateDoc = {
+        $set: {
+          title: data.title,
+          image: data.image,
+          publisher: data.publisher,
+          tag: data.tag,
+          description: data.description,
+        },
+      };
+      const result = await articleCollection.updateOne(query, updateDoc);
+      res.send(result);
+    });
     //====================!Admin routes========================
 
     //====================!publisher api========================
