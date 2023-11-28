@@ -118,12 +118,12 @@ async function run() {
       res.send(result);
     });
 
-    app.get('/details/:id', async(req, res) => {
-      const id = req.params.id ;
-      const query = {_id :new ObjectId(id)}
+    app.get("/details/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
       const result = await articleCollection.findOne(query);
-      res.send(result)
-    })
+      res.send(result);
+    });
 
     //!decline post
     app.post("/declines", async (req, res) => {
@@ -157,6 +157,27 @@ async function run() {
       res.send(result);
     });
 
+    //====================!premium article api======================
+
+    //!===================premium get using query====================
+
+    // app.get("/premium", async (req, res) => {
+    //   const quality = req.query.Quality;
+    //   const query = { Quality: quality };
+    //   const result = await articleCollection.find(query).toArray();
+    //   console.log(result);
+    //   res.send(result);
+    // });
+
+    // //!===================premium get using params====================
+    app.get("/premium/:id", async (req, res) => {
+      const premium = req.params.id;
+      const query = { Quality: premium };
+      const result = await articleCollection.find(query).toArray();
+      console.log(result);
+      res.send(result);
+    });
+
     //====================!my article api======================
     app.get("/articles/myarticle", async (req, res) => {
       const email = req.query.email;
@@ -164,13 +185,13 @@ async function run() {
       const result = await articleCollection.find(query).toArray();
       res.send(result);
     });
-  
-    app.get('/articles/update/:id',async(req,res) =>{
-      const id = req.params.id 
-      const query = {_id :new ObjectId(id)}
-      const result = await articleCollection.findOne(query)
-      res.send(result)
-    })
+
+    app.get("/articles/update/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await articleCollection.findOne(query);
+      res.send(result);
+    });
 
     //!delete api myarticle
     app.delete("/articles/myarticle/:id", async (req, res) => {
@@ -261,11 +282,6 @@ async function run() {
       const result = await articleCollection.updateOne(query, updateDoc);
       res.send(result);
     });
-
-
-    
-
-
 
     console.log(
       "Pinged your deployment. You successfully connected to MongoDB!"
