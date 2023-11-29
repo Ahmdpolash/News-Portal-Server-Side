@@ -2,6 +2,7 @@ const express = require("express");
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const app = express();
 require("dotenv").config();
+const stripe = require("stripe")(process.env.ACCESS_TOKEN_SECRET);
 const port = process.env.PORT || 5000;
 const jwt = require("jsonwebtoken");
 const cors = require("cors");
@@ -174,7 +175,6 @@ async function run() {
       const premium = req.params.id;
       const query = { Quality: premium };
       const result = await articleCollection.find(query).toArray();
-      console.log(result);
       res.send(result);
     });
 
@@ -280,6 +280,36 @@ async function run() {
         },
       };
       const result = await articleCollection.updateOne(query, updateDoc);
+      res.send(result);
+    });
+
+    //!==========================payment
+    app.post("/create-payment-intent", async (req, res) => {
+      const { price } = req.body;
+
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: price * 100,
+        currency: "usd",
+        payment_method_types: ["card"],
+      });
+
+      res.send({
+        clientSecret: paymentIntent.client_secret,
+      });
+    });
+
+    app.patch("/users/:email", async (req, res) => {
+      const email = req.params.email;
+      const query = { email: email };
+      const data = req.body;
+      const updateDoc = {
+        $set: {
+          premiumTaken: data.premiumTaken,
+          price: data.amount,
+          transactionId: data.transactionId,
+        },
+      };
+      const result = await usersCollection.updateOne(query, updateDoc);
       res.send(result);
     });
 
