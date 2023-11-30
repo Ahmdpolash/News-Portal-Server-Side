@@ -8,36 +8,32 @@ const jwt = require("jsonwebtoken");
 const cors = require("cors");
 
 //!middleware
-app.use(cors());
+app.use(
+  cors({
+    credentials: true,
+    origin: [
+      "https://newspaper-website-f1698.firebaseapp.com",
+      "https://newspaper-website-f1698.web.app",
+      "http://localhost:5173",
+    ],
+  })
+);
 app.use(express.json());
 
 //!JWT VERIFICATION
-app.verifyToken = async (req, res, next) => {
-  const token = req.cookies.token;
+const verifyToken = async (req, res, next) => {
+  // console.log("inside verify token", req.headers);
 
-  if (!token) {
-    return res.status(401).send({ message: "unauthorized-access" });
+  if (!req.headers.authorization) {
+    return res.status(401).send({ message: "forbidden access" });
   }
+  const token = req.headers.authorization.split(" ")[1];
 
-  //   if (!req.headers.authorization) {
-  //     return res.status(401).send({ message: "forbidden access" });
-  //   }
-  //   const token = req.headers.authorization.split(" ")[1];
-
-  //   jwt.verify(token, process.env.ACCESS_SECRET, (err, decoded) => {
-  //     if (err) {
-  //       return res.status(401).send({ message: "forbidden access" });
-  //     }
-  //     req.decoded = decoded;
-  //     next();
-  //   });
-
-  jwt.verify(token, secret, (err, decoded) => {
+  jwt.verify(token, process.env.JWT_SECRET_KEY, (err, decoded) => {
     if (err) {
-      return res.status(401).send({ message: "unauthorized-access" });
+      return res.status(401).send({ message: "forbidden access" });
     }
-
-    req.user = decoded;
+    req.decoded = decoded;
     next();
   });
 };
@@ -171,7 +167,7 @@ async function run() {
     // });
 
     // //!===================premium get using params====================
-    app.get("/premium/:id", async (req, res) => {
+    app.get("/premium/:id", verifyToken, async (req, res) => {
       const premium = req.params.id;
       const query = { Quality: premium };
       const result = await articleCollection.find(query).toArray();
@@ -219,6 +215,16 @@ async function run() {
       const result = await articleCollection.updateOne(query, updateDoc);
       res.send(result);
     });
+
+    //!disabled premium
+
+    app.get("/users/premiumUser/:email", async (req, res) => {
+      const email = req.params.email;
+      const query = { email: email };
+      const result = await usersCollection.findOne(query);
+      res.send(result);
+    });
+
     //====================!Admin routes========================
 
     //====================!publisher api========================
@@ -302,11 +308,13 @@ async function run() {
       const email = req.params.email;
       const query = { email: email };
       const data = req.body;
+      
       const updateDoc = {
         $set: {
           premiumTaken: data.premiumTaken,
           price: data.amount,
           transactionId: data.transactionId,
+          time:data.time
         },
       };
       const result = await usersCollection.updateOne(query, updateDoc);
@@ -325,7 +333,9 @@ run().catch(console.dir);
 //!JWT AUTHENTICATION
 app.post("/jwt", async (req, res) => {
   const user = req.body;
-  const token = jwt.sign(user, secret, { expiresIn: "250h" });
+  const token = jwt.sign(user, process.env.JWT_SECRET_KEY, {
+    expiresIn: "250h",
+  });
   res.send({ token });
 });
 
