@@ -308,13 +308,28 @@ async function run() {
       const email = req.params.email;
       const query = { email: email };
       const data = req.body;
-      
+
       const updateDoc = {
         $set: {
           premiumTaken: data.premiumTaken,
           price: data.amount,
           transactionId: data.transactionId,
-          time:data.time
+          time: data.time,
+        },
+      };
+      const result = await usersCollection.updateOne(query, updateDoc);
+      res.send(result);
+    });
+
+    //!=========================profile edit ========================
+    app.patch("/user/profile/:email", async (req, res) => {
+      const email = req.params.email;
+      const query = { email: email };
+      const data = req.body;
+      const updateDoc = {
+        $set: {
+          name: data.name,
+          image: data.image,
         },
       };
       const result = await usersCollection.updateOne(query, updateDoc);
